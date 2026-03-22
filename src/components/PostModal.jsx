@@ -179,7 +179,7 @@ export default function PostModal({ onClose, onSuccess, currentUser, school, sch
 
     const { error } = await supabase.from('listings').insert(listing)
     if (error) setError(error.message)
-    else onSuccess()
+    else onSuccess({ title, price: price ? parseInt(price) : 0, location })
     setLoading(false)
   }
 

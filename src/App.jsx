@@ -39,6 +39,8 @@ function App() {
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState({ sort: 'newest' })
   const [favs, setFavs] = useState(new Set())
+  const [followedUsers, setFollowedUsers] = useState(new Set())
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0)
 
   // Seller page
   const [sellerPage, setSellerPage] = useState(null) // userId or null
@@ -113,11 +115,57 @@ function App() {
       console.error('Profile load error:', error.message)
     }
     loadFavs(user.id)
+    loadFollows(user.id)
+    loadUnreadNotifs(user.id)
   }
 
   async function loadFavs(userId) {
     const { data } = await supabase.from('favorites').select('listing_id').eq('user_id', userId)
     if (data) setFavs(new Set(data.map(f => f.listing_id)))
+  }
+
+  async function loadFollows(userId) {
+    const { data } = await supabase.from('follows').select('following_id').eq('follower_id', userId)
+    if (data) setFollowedUsers(new Set(data.map(f => f.following_id)))
+  }
+
+  async function loadUnreadNotifs(userId) {
+    const { count } = await supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('read', false)
+    setUnreadNotifCount(count || 0)
+  }
+
+  async function followUser(userId) {
+    if (!currentUser) return
+    await supabase.from('follows').insert({ follower_id: currentUser.id, following_id: userId })
+    setFollowedUsers(prev => new Set([...prev, userId]))
+  }
+
+  async function unfollowUser(userId) {
+    if (!currentUser) return
+    await supabase.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', userId)
+    setFollowedUsers(prev => { const n = new Set(prev); n.delete(userId); return n })
+  }
+
+  async function notifyFollowers(listing) {
+    if (!currentUser || !listing) return
+    const { data: follows } = await supabase.from('follows').select('follower_id').eq('following_id', currentUser.id)
+    if (!follows?.length) return
+    // In-app notifications
+    await supabase.from('notifications').insert(
+      follows.map(f => ({
+        user_id: f.follower_id,
+        seller_id: currentUser.id,
+        seller_name: profile?.name || 'Someone you follow',
+        listing_title: listing.title,
+        listing_price: listing.price ?? null,
+      }))
+    )
+    // Email via edge function (silently fails if not deployed)
+    try {
+      await supabase.functions.invoke('notify-followers', {
+        body: { sellerId: currentUser.id, sellerName: profile?.name || 'A seller you follow', title: listing.title, price: listing.price, location: listing.location },
+      })
+    } catch (_) {}
   }
 
   // Load listings
@@ -254,6 +302,8 @@ function App() {
         currentUser={currentUser} profile={profile} favCount={favs.size}
         onProfile={handleProfile} isMobile={isMobile}
         schoolColor={schoolColor}
+        unreadNotifCount={unreadNotifCount}
+        onNotifCountChange={setUnreadNotifCount}
       />
 
       {/* Mobile tab strip */}
@@ -454,6 +504,9 @@ function App() {
             favs={favs}
             schoolColor={schoolColor}
             currentUser={currentUser}
+            isFollowing={followedUsers.has(sellerPage)}
+            onFollow={followUser}
+            onUnfollow={unfollowUser}
           />
         )}
       </div>
@@ -492,7 +545,7 @@ function App() {
       {showPost && (
         <PostModal
           onClose={() => setShowPost(false)}
-          onSuccess={() => { setShowPost(false); setToast('Posted! 🎉'); loadListings(school, category, activeSection, filters.sort) }}
+          onSuccess={async (listing) => { setShowPost(false); setToast('Posted! 🎉'); loadListings(school, category, activeSection, filters.sort); notifyFollowers(listing) }}
           currentUser={currentUser}
           school={school}
           schoolColor={schoolColor}

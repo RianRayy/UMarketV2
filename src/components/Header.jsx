@@ -1,10 +1,12 @@
 import { ChevronDown, MapPin } from 'lucide-react'
 import { SCHOOLS } from '../constants'
+import NotificationPanel from './NotificationPanel'
 
 export default function Header({
   school, onSchoolClick, search, onSearch,
   onPost, onAuth, currentUser, profile, favCount,
-  onProfile, isMobile, schoolColor
+  onProfile, isMobile, schoolColor,
+  unreadNotifCount, onNotifCountChange,
 }) {
   const schoolObj = SCHOOLS.find(s => s.id === school)
   const red = schoolColor || '#CC0000'
@@ -34,7 +36,7 @@ export default function Header({
             border: '1.5px solid rgba(255,255,255,0.35)',
             cursor: 'pointer', color: '#fff',
             fontSize: 13, fontWeight: 600,
-            transition: 'background 0.15s', flexShrink: 0
+            transition: 'background 0.15s', flexShrink: 0,
           }}
           onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
           onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
@@ -58,21 +60,34 @@ export default function Header({
           </div>
         )}
 
-        {/* Auth actions */}
+        {/* Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           {currentUser ? (
             <>
+              {/* Notification bell */}
+              <NotificationPanel
+                currentUser={currentUser}
+                schoolColor={red}
+                unreadCount={unreadNotifCount || 0}
+                onCountChange={onNotifCountChange}
+              />
+
               <button
                 onClick={onPost}
                 style={{ padding: '7px 18px', borderRadius: 99, border: '1.5px solid rgba(255,255,255,0.5)', background: 'transparent', color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: 14 }}
               >+ Post</button>
+
               <button
                 onClick={() => onProfile('listings')}
                 style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 14px 5px 6px', borderRadius: 99, border: 'none', background: '#fff', color: red, cursor: 'pointer', fontWeight: 700, fontSize: 14 }}
               >
-                <div style={{ width: 30, height: 30, borderRadius: '50%', background: red, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 14 }}>
-                  {profile?.name?.[0]?.toUpperCase() || '?'}
-                </div>
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="" style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: 30, height: 30, borderRadius: '50%', background: red, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 14 }}>
+                    {profile?.name?.[0]?.toUpperCase() || '?'}
+                  </div>
+                )}
                 {!isMobile && (profile?.name?.split(' ')[0] || 'Profile')}
               </button>
             </>
