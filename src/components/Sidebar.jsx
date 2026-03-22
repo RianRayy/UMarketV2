@@ -7,7 +7,10 @@ const HOUSING_CATS = [
   { id: 'looking', label: 'Looking for Roommates', icon: '🔍' },
 ]
 
-const MARKETPLACE_CATS = CATEGORIES.filter(c => !['all','housing','sublease','looking'].includes(c.id))
+const MARKETPLACE_CATS = [
+  { id: 'all', label: 'All Marketplace', icon: '🛍️' },
+  ...CATEGORIES.filter(c => !['all','housing','sublease','looking'].includes(c.id))
+]
 
 export default function Sidebar({ category, onCategory, schoolColor, mode }) {
   const cats = mode === 'housing' ? HOUSING_CATS : MARKETPLACE_CATS

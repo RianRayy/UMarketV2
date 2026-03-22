@@ -107,11 +107,19 @@ function App() {
       .eq('school_id', school)
 
     if (category !== 'all') {
+      // Specific sub-category selected
       if (category === 'housing') query = query.eq('is_housing', true).eq('category', 'housing')
       else if (category === 'sublease') query = query.eq('is_housing', true).eq('category', 'sublease')
       else if (category === 'looking') query = query.eq('is_looking', true)
-      else query = query.eq('category', category)
+      else query = query.eq('category', category).eq('is_housing', false).eq('is_looking', false)
+    } else if (activeSection === 'housing') {
+      // All housing: housing listed + subleases + looking for roommates
+      query = query.or('is_housing.eq.true,is_looking.eq.true')
+    } else if (activeSection === 'marketplace') {
+      // All marketplace: sell items only (no housing, no looking)
+      query = query.eq('is_housing', false).eq('is_looking', false)
     }
+    // activeSection === null → show everything (All)
 
     if (filters.sort === 'low') query = query.order('price', { ascending: true })
     else if (filters.sort === 'high') query = query.order('price', { ascending: false })
@@ -259,7 +267,7 @@ function App() {
               ].map(s => (
                 <button
                   key={s.cat}
-                  onClick={() => { setCategory(s.cat); setActiveSection('housing') }}
+                  onClick={() => { setCategory(s.cat); setActiveSection('housing'); }}
                   style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: isMobile ? '12px 8px' : '20px 24px', textAlign: 'center', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', transition: 'box-shadow 0.15s' }}
                   onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)'}
                   onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'}
@@ -292,7 +300,7 @@ function App() {
                 }}
               >Explore Housing</button>
               <button
-                onClick={() => { setCategory('textbooks'); setActiveSection('marketplace') }}
+                onClick={() => { setCategory('all'); setActiveSection('marketplace') }}
                 style={{
                   padding: '12px 26px', borderRadius: 99, fontWeight: 700, fontSize: 15, cursor: 'pointer', border: 'none',
                   background: activeSection === 'marketplace' ? '#111' : '#f3f4f6',
