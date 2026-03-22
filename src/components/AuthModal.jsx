@@ -13,6 +13,7 @@ export default function AuthModal({ mode: initMode, onClose, onSuccess, schoolCo
   const [grade, setGrade] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [checkEmail, setCheckEmail] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -38,9 +39,28 @@ export default function AuthModal({ mode: initMode, onClose, onSuccess, schoolCo
           transactions: 0, sold_count: 0
         })
       }
-      onSuccess()
+      setCheckEmail(true)
     }
     setLoading(false)
+  }
+
+  if (checkEmail) {
+    return (
+      <Overlay onClose={onClose} title="Check your email">
+        <div style={{ textAlign: 'center', padding: '12px 0 8px' }}>
+          <div style={{ fontSize: 52, marginBottom: 16 }}>📬</div>
+          <p style={{ fontSize: 16, fontWeight: 700, color: '#111', margin: '0 0 10px' }}>Verify your email</p>
+          <p style={{ fontSize: 14, color: '#6b7280', margin: '0 0 20px', lineHeight: 1.6 }}>
+            We sent a verification link to <strong>{email}</strong>.<br />
+            Click it to finish signing up — you'll be logged in automatically.
+          </p>
+          <button
+            onClick={onClose}
+            style={{ padding: '11px 28px', borderRadius: 10, border: 'none', background: schoolColor || '#111', color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
+          >Got it</button>
+        </div>
+      </Overlay>
+    )
   }
 
   return (

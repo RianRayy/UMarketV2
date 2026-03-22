@@ -68,9 +68,13 @@ function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) loadUser(session.user)
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      if (session?.user) loadUser(session.user)
-      else { setCurrentUser(null); setProfile(null); setFavs(new Set()) }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        loadUser(session.user)
+        if (event === 'SIGNED_IN') setToast('Welcome! You\'re signed in 🎉')
+      } else {
+        setCurrentUser(null); setProfile(null); setFavs(new Set())
+      }
     })
     return () => subscription.unsubscribe()
   }, [])
