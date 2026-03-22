@@ -208,7 +208,7 @@ function App() {
         school={school} onSchoolClick={() => setShowSchool(true)}
         search={search} onSearch={setSearch}
         onPost={handlePost} onAuth={handleAuth}
-        currentUser={currentUser} favCount={favs.size}
+        currentUser={currentUser} profile={profile} favCount={favs.size}
         onProfile={handleProfile} isMobile={isMobile}
         schoolColor={schoolColor}
       />

@@ -3,7 +3,7 @@ import { SCHOOLS } from '../constants'
 
 export default function Header({
   school, onSchoolClick, search, onSearch,
-  onPost, onAuth, currentUser, favCount,
+  onPost, onAuth, currentUser, profile, favCount,
   onProfile, isMobile, schoolColor
 }) {
   const schoolObj = SCHOOLS.find(s => s.id === school)
@@ -68,8 +68,13 @@ export default function Header({
               >+ Post</button>
               <button
                 onClick={() => onProfile('listings')}
-                style={{ padding: '7px 18px', borderRadius: 99, border: 'none', background: '#fff', color: red, cursor: 'pointer', fontWeight: 700, fontSize: 14 }}
-              >Profile</button>
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 14px 5px 6px', borderRadius: 99, border: 'none', background: '#fff', color: red, cursor: 'pointer', fontWeight: 700, fontSize: 14 }}
+              >
+                <div style={{ width: 30, height: 30, borderRadius: '50%', background: red, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 14 }}>
+                  {profile?.name?.[0]?.toUpperCase() || '?'}
+                </div>
+                {!isMobile && (profile?.name?.split(' ')[0] || 'Profile')}
+              </button>
             </>
           ) : (
             <>

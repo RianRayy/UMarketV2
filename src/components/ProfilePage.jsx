@@ -32,16 +32,16 @@ export default function ProfilePage({
       {/* Profile header */}
       <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16, padding: 20, marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-          <div style={{ width: 60, height: 60, borderRadius: '50%', background: schoolColor ? schoolColor + '20' : '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 800, color: schoolColor || '#374151', flexShrink: 0 }}>
+          <div style={{ width: 68, height: 68, borderRadius: '50%', background: schoolColor || '#CC0000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 900, color: '#fff', flexShrink: 0, boxShadow: `0 4px 12px ${schoolColor || '#CC0000'}40` }}>
             {profile?.name?.[0]?.toUpperCase() || '?'}
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#111' }}>{profile?.name || 'User'}</h2>
+              <h2 style={{ margin: 0, fontSize: 22, fontWeight: 900, color: '#111', letterSpacing: '-0.5px' }}>{profile?.name || 'User'}</h2>
               {profile?.verified && <CheckCircle size={16} color="#22c55e" />}
               {profile?.sold_count >= 5 && <Award size={16} color="#f59e0b" />}
             </div>
-            <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{profile?.grade} · {profile?.school?.toUpperCase()}</p>
+            <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>Class of {profile?.grade} · {profile?.school?.toUpperCase()}</p>
           </div>
           <button
             onClick={() => setEditingProfile(!editingProfile)}
