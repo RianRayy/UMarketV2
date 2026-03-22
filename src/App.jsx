@@ -398,6 +398,7 @@ function App() {
             schoolColor={schoolColor}
             initTab={profileTab}
             onToast={setToast}
+            onProfileUpdate={updates => setProfile(prev => ({ ...prev, ...updates }))}
           />
         )}
       </div>

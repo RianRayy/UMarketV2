@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import React from 'react'
 import { CheckCircle, Award, LogOut, Package, Heart, Settings, Edit2, Trash2, ChevronRight, School } from 'lucide-react'
 import { supabase } from '../supabase'
 import { getCardColor } from '../constants'
@@ -7,18 +8,26 @@ export default function ProfilePage({
   currentUser, profile, listings, favListings,
   onEdit, onDelete, onSold, onDetail,
   onSchoolSwitch, onLogout, schoolColor,
-  initTab, onToast
+  initTab, onToast, onProfileUpdate
 }) {
   const [tab, setTab] = useState(initTab || 'listings')
   const [editingProfile, setEditingProfile] = useState(false)
   const [name, setName] = useState(profile?.name || '')
   const [contactType, setContactType] = useState(profile?.contact_type || 'instagram')
   const [contact, setContact] = useState(profile?.contact || '')
+
+  // Sync local state when profile prop updates
+  useEffect(() => {
+    if (profile?.name) setName(profile.name)
+    if (profile?.contact_type) setContactType(profile.contact_type)
+    if (profile?.contact) setContact(profile.contact)
+  }, [profile])
   const [saving, setSaving] = useState(false)
 
   async function saveProfile() {
     setSaving(true)
     await supabase.from('profiles').update({ name, contact, contact_type: contactType }).eq('id', currentUser.id)
+    onProfileUpdate?.({ name, contact, contact_type: contactType })
     onToast('Profile updated')
     setEditingProfile(false)
     setSaving(false)
@@ -41,7 +50,9 @@ export default function ProfilePage({
               {profile?.verified && <CheckCircle size={16} color="#22c55e" />}
               {profile?.sold_count >= 5 && <Award size={16} color="#f59e0b" />}
             </div>
-            <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>Class of {profile?.grade} · {profile?.school?.toUpperCase()}</p>
+            <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>
+              {profile?.grade ? `Class of ${profile.grade}` : 'No grad year set'} · {profile?.school?.toUpperCase() || ''}
+            </p>
           </div>
           <button
             onClick={() => setEditingProfile(!editingProfile)}
