@@ -12,24 +12,20 @@ export default function Header({
     <header style={{ position: 'sticky', top: 0, zIndex: 50, background: '#fff', borderBottom: '1px solid #e5e7eb' }}>
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: isMobile ? '0 16px' : '0 32px', height: 56, display: 'flex', alignItems: 'center', gap: 12 }}>
 
-        {/* School badge — acts as school picker */}
+        {/* Logo — clicks to open school picker */}
         <button
           onClick={onSchoolClick}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '6px 16px', borderRadius: 99,
-            border: `1.5px solid ${red}`,
-            background: red + '10',
-            cursor: 'pointer', flexShrink: 0,
-            fontSize: 13, fontWeight: 600, color: red,
-            transition: 'background 0.15s'
-          }}
-          onMouseEnter={e => e.currentTarget.style.background = red + '20'}
-          onMouseLeave={e => e.currentTarget.style.background = red + '10'}
+          style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', flexShrink: 0, background: 'none', border: 'none', padding: 0 }}
         >
-          <div style={{ width: 20, height: 20, borderRadius: '50%', background: red, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 11, flexShrink: 0 }}>U</div>
-          {schoolObj ? `Built for ${schoolObj.name} students` : 'Pick your school'}
-          <span style={{ fontSize: 11, opacity: 0.7 }}>▾</span>
+          <div style={{ width: 44, height: 44, borderRadius: '50%', background: red, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: 20, flexShrink: 0 }}>U</div>
+          {!isMobile && (
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontWeight: 800, fontSize: 16, color: '#111', letterSpacing: '-0.3px', lineHeight: 1.2 }}>U Marketplace</div>
+              <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.3 }}>
+                {schoolObj ? `${schoolObj.name} student housing + marketplace` : 'Student housing + marketplace'}
+              </div>
+            </div>
+          )}
         </button>
 
         <div style={{ flex: 1 }} />
