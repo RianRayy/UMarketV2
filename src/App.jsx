@@ -118,7 +118,7 @@ function App() {
   async function loadListings(currentSchool, currentCategory, currentSection, sortOrder) {
     setLoading(true)
     let query = supabase.from('listings')
-      .select('*, profiles(name, verified, sold_count)')
+      .select('*')
       .eq('school_id', currentSchool)
 
     if (currentCategory !== 'all') {
@@ -389,7 +389,7 @@ function App() {
                   <p style={{ fontSize: 48, marginBottom: 12 }}>🔍</p>
                   <p style={{ fontSize: 18, fontWeight: 700, color: '#374151', margin: '0 0 6px' }}>No listings found</p>
                   <p style={{ fontSize: 14, color: '#9ca3af', margin: '0 0 12px' }}>Try a different category or search term</p>
-                  <p style={{ fontSize: 11, color: '#d1d5db', margin: 0 }}>school: {school} | cat: {category} | section: {activeSection ?? 'null'} | total: {listings.length}</p>
+                  <button onClick={handlePost} style={{ marginTop: 8, padding: '10px 22px', borderRadius: 10, border: 'none', background: schoolColor || '#111', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>Post something</button>
                 </div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 20 }} className="animate-fade-in">
@@ -463,7 +463,7 @@ function App() {
       {showPost && (
         <PostModal
           onClose={() => setShowPost(false)}
-          onSuccess={() => { setShowPost(false); setToast('Posted!'); loadListings() }}
+          onSuccess={() => { setShowPost(false); setToast('Posted! 🎉'); loadListings(school, category, activeSection, filters.sort) }}
           currentUser={currentUser}
           school={school}
           schoolColor={schoolColor}
