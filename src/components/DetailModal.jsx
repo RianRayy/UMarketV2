@@ -7,6 +7,7 @@ import {
 import Overlay from './Overlay'
 import { timeAgo } from '../utils/time'
 import { supabase } from '../supabase'
+import { Avatar, VerifiedBadge } from './ProfilePage'
 
 /* ─── Lightbox ─────────────────────────────────────────────────────────── */
 function Lightbox({ imgs, startIdx, onClose }) {
@@ -216,7 +217,7 @@ export default function DetailModal({
     if (sellerProfile || !listing.seller_id) return
     supabase
       .from('profiles')
-      .select('name, grade, verified, sold_count')
+      .select('name, grade, verified, sold_count, avatar_url')
       .eq('id', listing.seller_id)
       .single()
       .then(({ data }) => { if (data) setSellerProfile(data) })
@@ -313,17 +314,15 @@ export default function DetailModal({
               onMouseEnter={e => { if (onViewSeller) e.currentTarget.style.background = '#f0f0f0' }}
               onMouseLeave={e => e.currentTarget.style.background = '#f9fafb'}
             >
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: schoolColor ? schoolColor + '20' : '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16, color: schoolColor || '#374151', flexShrink: 0 }}>
-                {sellerProfile.name?.[0]?.toUpperCase()}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Avatar profile={sellerProfile} size={44} schoolColor={schoolColor} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 2 }}>
                   <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#111' }}>{sellerProfile.name}</p>
-                  {sellerProfile.verified && <CheckCircle size={14} color="#22c55e" />}
-                  {sellerProfile.sold_count >= 5 && <Award size={14} color="#f59e0b" />}
+                  {sellerProfile.verified && <VerifiedBadge />}
+                  {sellerProfile.sold_count >= 5 && <Award size={13} color="#f59e0b" />}
                 </div>
                 <p style={{ margin: 0, fontSize: 12, color: '#6b7280' }}>
-                  {sellerProfile.grade} · {sellerProfile.sold_count > 0 ? `${sellerProfile.sold_count} sold` : 'New seller'}
+                  {sellerProfile.grade ? `Class of ${sellerProfile.grade} · ` : ''}{sellerProfile.sold_count > 0 ? `${sellerProfile.sold_count} sold` : 'New seller'}
                 </p>
               </div>
               {onViewSeller && (

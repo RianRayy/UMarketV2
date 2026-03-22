@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { ArrowLeft, CheckCircle, Award, Package } from 'lucide-react'
+import { ArrowLeft, Award, Package } from 'lucide-react'
 import { supabase } from '../supabase'
 import ListingCard from './ListingCard'
+import { Avatar, VerifiedBadge } from './ProfilePage'
 
 export default function SellerPage({ sellerId, onBack, onDetail, onFav, favs, schoolColor, currentUser }) {
   const [sellerProfile, setSellerProfile] = useState(null)
@@ -13,7 +14,7 @@ export default function SellerPage({ sellerId, onBack, onDetail, onFav, favs, sc
     async function load() {
       setLoading(true)
       const [{ data: prof }, { data: listings }] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', sellerId).single(),
+        supabase.from('profiles').select('name, grade, verified, sold_count, avatar_url, school').eq('id', sellerId).single(),
         supabase.from('listings').select('*').eq('seller_id', sellerId).eq('sold', false).order('created_at', { ascending: false }),
       ])
       if (prof) setSellerProfile(prof)
@@ -51,19 +52,11 @@ export default function SellerPage({ sellerId, onBack, onDetail, onFav, favs, sc
         <>
           {/* Profile card */}
           <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16, padding: 24, marginBottom: 28, display: 'flex', alignItems: 'center', gap: 18 }}>
-            <div style={{
-              width: 72, height: 72, borderRadius: '50%',
-              background: schoolColor || '#CC0000',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 28, fontWeight: 900, color: '#fff', flexShrink: 0,
-              boxShadow: `0 4px 12px ${schoolColor || '#CC0000'}40`,
-            }}>
-              {initial}
-            </div>
+            <Avatar profile={sellerProfile} size={72} schoolColor={schoolColor} />
             <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
                 <h2 style={{ margin: 0, fontSize: 22, fontWeight: 900, color: '#111', letterSpacing: '-0.5px' }}>{name}</h2>
-                {sellerProfile?.verified && <CheckCircle size={16} color="#22c55e" />}
+                {sellerProfile?.verified && <VerifiedBadge size="lg" />}
                 {sellerProfile?.sold_count >= 5 && <Award size={16} color="#f59e0b" title="Power Seller" />}
               </div>
               <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>
