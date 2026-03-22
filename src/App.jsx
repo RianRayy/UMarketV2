@@ -237,6 +237,40 @@ function App() {
             )}
 
             <div style={{ flex: 1, minWidth: 0 }}>
+              {/* Housing stats banner — only on All tab */}
+              {category === 'all' && !loading && listings.length > 0 && (() => {
+                const lookingCount = listings.filter(l => l.category === 'looking' || l.is_looking).length
+                const subleaseCount = listings.filter(l => l.category === 'sublease').length
+                const homesCount = listings.filter(l => l.category === 'housing').length
+                const stats = [
+                  { icon: '🔍', label: 'Looking for housing', count: lookingCount, cat: 'looking' },
+                  { icon: '🔑', label: 'Subleases available', count: subleaseCount, cat: 'sublease' },
+                  { icon: '🏡', label: 'Homes listed', count: homesCount, cat: 'housing' },
+                ]
+                return (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
+                    {stats.map(s => (
+                      <button
+                        key={s.cat}
+                        onClick={() => setCategory(s.cat)}
+                        style={{
+                          background: '#fff', border: '1.5px solid #e5e7eb', borderRadius: 14,
+                          padding: '14px 12px', cursor: 'pointer', textAlign: 'left',
+                          transition: 'border-color 0.15s, box-shadow 0.15s',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = schoolColor; e.currentTarget.style.boxShadow = `0 0 0 3px ${schoolColor}15` }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = '#e5e7eb'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)' }}
+                      >
+                        <div style={{ fontSize: 22, marginBottom: 6 }}>{s.icon}</div>
+                        <div style={{ fontSize: 26, fontWeight: 800, color: '#111', lineHeight: 1 }}>{s.count}</div>
+                        <div style={{ fontSize: 12, color: '#6b7280', fontWeight: 500, marginTop: 4 }}>{s.label}</div>
+                      </button>
+                    ))}
+                  </div>
+                )
+              })()}
+
               {/* Filter bar */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
                 <button
