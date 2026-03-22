@@ -65,13 +65,19 @@ function App() {
 
   // Auth listener
   useEffect(() => {
+    // Restore session on page load
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) loadUser(session.user)
+      else setLoading(false)
     })
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         loadUser(session.user)
-        if (event === 'SIGNED_IN') setToast('Welcome! You\'re signed in 🎉')
+        // Only toast on explicit login/signup, not every page reload
+        if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+          setToast('Welcome back! 👋')
+        }
       } else {
         setCurrentUser(null); setProfile(null); setFavs(new Set())
       }
@@ -81,10 +87,19 @@ function App() {
 
   async function loadUser(user) {
     setCurrentUser(user)
-    const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single()
     if (data) {
       setProfile(data)
-      if (data.school && !school) setSchool(data.school)
+      // Restore school from profile if not already set in localStorage
+      if (data.school_id) {
+        setSchool(data.school_id)
+        localStorage.setItem('umarket_school', data.school_id)
+      } else if (data.school) {
+        setSchool(data.school)
+        localStorage.setItem('umarket_school', data.school)
+      }
+    } else if (error) {
+      console.error('Profile load error:', error.message)
     }
     loadFavs(user.id)
   }
@@ -205,7 +220,11 @@ function App() {
         >
           Pick your school →
         </button>
-        {showSchool && <SchoolPicker current={school} onSelect={s => { setSchool(s); localStorage.setItem('umarket_school', s) }} onClose={() => setShowSchool(false)} />}
+        {showSchool && <SchoolPicker current={school} onSelect={s => {
+            setSchool(s)
+            localStorage.setItem('umarket_school', s)
+            if (currentUser) supabase.from('profiles').update({ school: s }).eq('id', currentUser.id)
+          }} onClose={() => setShowSchool(false)} />}
       </div>
     )
   }
@@ -434,7 +453,11 @@ function App() {
       {showSchool && (
         <SchoolPicker
           current={school}
-          onSelect={s => { setSchool(s); localStorage.setItem('umarket_school', s) }}
+          onSelect={s => {
+            setSchool(s)
+            localStorage.setItem('umarket_school', s)
+            if (currentUser) supabase.from('profiles').update({ school: s }).eq('id', currentUser.id)
+          }}
           onClose={() => setShowSchool(false)}
         />
       )}
