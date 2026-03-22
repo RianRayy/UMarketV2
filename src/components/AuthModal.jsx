@@ -39,11 +39,12 @@ export default function AuthModal({ mode: initMode, onClose, onSuccess, schoolCo
       })
       if (error) { setError(error.message); setLoading(false); return }
       if (data.user) {
-        await supabase.from('profiles').insert({
+        await supabase.from('profiles').upsert({
           id: data.user.id, name, school, grade,
+          school_id: school,
           verified: true,
-          transactions: 0, sold_count: 0
-        })
+          transactions: 0, sold_count: 0,
+        }, { onConflict: 'id' })
       }
       setCheckEmail(true)
     }

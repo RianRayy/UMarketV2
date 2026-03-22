@@ -91,16 +91,23 @@ function App() {
 
   async function loadUser(user) {
     setCurrentUser(user)
-    const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+    let { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+
+    // If profile doesn't exist yet, create a minimal one
+    if (!data && error?.code === 'PGRST116') {
+      const { data: newProfile } = await supabase.from('profiles').upsert(
+        { id: user.id, verified: false, transactions: 0, sold_count: 0 },
+        { onConflict: 'id' }
+      ).select().single()
+      data = newProfile
+    }
+
     if (data) {
       setProfile(data)
-      // Restore school from profile if not already set in localStorage
-      if (data.school_id) {
-        setSchool(data.school_id)
-        localStorage.setItem('umarket_school', data.school_id)
-      } else if (data.school) {
-        setSchool(data.school)
-        localStorage.setItem('umarket_school', data.school)
+      const schoolVal = data.school_id || data.school
+      if (schoolVal) {
+        setSchool(schoolVal)
+        localStorage.setItem('umarket_school', schoolVal)
       }
     } else if (error) {
       console.error('Profile load error:', error.message)
@@ -122,7 +129,7 @@ function App() {
   async function loadListings(currentSchool, currentCategory, currentSection, sortOrder) {
     setLoading(true)
     let query = supabase.from('listings')
-      .select('*, profiles(name, grade, verified, sold_count)')
+      .select('*')
       .eq('school_id', currentSchool)
 
     if (currentCategory !== 'all') {

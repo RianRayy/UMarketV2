@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import Overlay from './Overlay'
 import { timeAgo } from '../utils/time'
+import { supabase } from '../supabase'
 
 /* ─── Lightbox ─────────────────────────────────────────────────────────── */
 function Lightbox({ imgs, startIdx, onClose }) {
@@ -203,11 +204,23 @@ export default function DetailModal({
   const [imgIdx, setImgIdx] = useState(0)
   const [lightbox, setLightbox] = useState(false)
   const [showShare, setShowShare] = useState(false)
+  const [sellerProfile, setSellerProfile] = useState(listing.profiles || null)
   const imgs = listing.images || []
   const isOwner = currentUser?.id === listing.seller_id
   const isHousing = listing.is_housing
   const isLooking = listing.is_looking
   const hasMap = listing.lat && listing.lng
+
+  // Fetch seller profile if not already attached
+  useEffect(() => {
+    if (sellerProfile || !listing.seller_id) return
+    supabase
+      .from('profiles')
+      .select('name, grade, verified, sold_count')
+      .eq('id', listing.seller_id)
+      .single()
+      .then(({ data }) => { if (data) setSellerProfile(data) })
+  }, [listing.seller_id])
 
   return (
     <>
@@ -288,7 +301,7 @@ export default function DetailModal({
           )}
 
           {/* ── Seller card — clickable ── */}
-          {listing.profiles && (
+          {sellerProfile && (
             <button
               onClick={() => onViewSeller && onViewSeller(listing.seller_id)}
               style={{
@@ -301,16 +314,16 @@ export default function DetailModal({
               onMouseLeave={e => e.currentTarget.style.background = '#f9fafb'}
             >
               <div style={{ width: 40, height: 40, borderRadius: '50%', background: schoolColor ? schoolColor + '20' : '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16, color: schoolColor || '#374151', flexShrink: 0 }}>
-                {listing.profiles.name?.[0]?.toUpperCase()}
+                {sellerProfile.name?.[0]?.toUpperCase()}
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#111' }}>{listing.profiles.name}</p>
-                  {listing.profiles.verified && <CheckCircle size={14} color="#22c55e" />}
-                  {listing.profiles.sold_count >= 5 && <Award size={14} color="#f59e0b" />}
+                  <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#111' }}>{sellerProfile.name}</p>
+                  {sellerProfile.verified && <CheckCircle size={14} color="#22c55e" />}
+                  {sellerProfile.sold_count >= 5 && <Award size={14} color="#f59e0b" />}
                 </div>
                 <p style={{ margin: 0, fontSize: 12, color: '#6b7280' }}>
-                  {listing.profiles.grade} · {listing.profiles.sold_count > 0 ? `${listing.profiles.sold_count} sold` : 'New seller'}
+                  {sellerProfile.grade} · {sellerProfile.sold_count > 0 ? `${sellerProfile.sold_count} sold` : 'New seller'}
                 </p>
               </div>
               {onViewSeller && (

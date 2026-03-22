@@ -43,7 +43,7 @@ export default function PostModal({ onClose, onSuccess, currentUser, school, sch
   const isHousing = type === 'housing' || type === 'sublease'
   const isLooking = type === 'looking'
 
-  // Debounced Nominatim search
+  // Debounced Nominatim search — street-level results
   useEffect(() => {
     if (locationConfirmed || !location || location.length < 3) {
       setLocationSuggestions([])
@@ -54,8 +54,8 @@ export default function PostModal({ onClose, onSuccess, currentUser, school, sch
       setLocationLoading(true)
       try {
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=6&addressdetails=1`,
-          { headers: { 'Accept-Language': 'en' } }
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=8&addressdetails=1&countrycodes=us`,
+          { headers: { 'Accept-Language': 'en', 'User-Agent': 'UMarket-Student-App' } }
         )
         const data = await res.json()
         setLocationSuggestions(data)
@@ -79,16 +79,24 @@ export default function PostModal({ onClose, onSuccess, currentUser, school, sch
     return () => document.removeEventListener('mousedown', onMouseDown)
   }, [])
 
-  function pickLocation(suggestion) {
-    // Build a readable name: "City, State, Country" style
+  function buildLocationLabel(suggestion) {
     const a = suggestion.address || {}
-    const parts = [
-      a.city || a.town || a.village || a.county,
-      a.state,
-      a.country_code?.toUpperCase() === 'US' ? null : a.country,
-    ].filter(Boolean)
-    const label = parts.length > 0 ? parts.join(', ') : suggestion.display_name.split(',').slice(0, 2).join(',').trim()
-    setLocation(label)
+    const street = [a.house_number, a.road].filter(Boolean).join(' ')
+    const neighborhood = a.neighbourhood || a.suburb || ''
+    const city = a.city || a.town || a.village || a.county || ''
+    const state = a.state || ''
+    // Street-level: "123 Main St, Salt Lake City, UT"
+    if (street) return [street, city, state].filter(Boolean).join(', ')
+    // Neighborhood/area: "Sugar House, Salt Lake City, UT"
+    if (neighborhood) return [neighborhood, city, state].filter(Boolean).join(', ')
+    // City-level fallback
+    if (city) return [city, state].filter(Boolean).join(', ')
+    // Last resort: first 3 comma parts of display_name
+    return suggestion.display_name.split(',').slice(0, 3).join(',').trim()
+  }
+
+  function pickLocation(suggestion) {
+    setLocation(buildLocationLabel(suggestion))
     setCoords({ lat: parseFloat(suggestion.lat), lng: parseFloat(suggestion.lon) })
     setLocationConfirmed(true)
     setShowSuggestions(false)
@@ -248,11 +256,14 @@ export default function PostModal({ onClose, onSuccess, currentUser, school, sch
               >
                 {locationSuggestions.map((s, i) => {
                   const a = s.address || {}
+                  const street = [a.house_number, a.road].filter(Boolean).join(' ')
+                  const neighborhood = a.neighbourhood || a.suburb || ''
                   const city = a.city || a.town || a.village || a.county || ''
                   const state = a.state || ''
-                  const country = a.country || ''
-                  const primary = city || s.display_name.split(',')[0]
-                  const secondary = [state, country].filter(Boolean).join(', ')
+                  const primary = street || neighborhood || city || s.display_name.split(',')[0]
+                  const secondary = street || neighborhood
+                    ? [city, state].filter(Boolean).join(', ')
+                    : [state].filter(Boolean).join(', ')
                   return (
                     <button
                       key={i}

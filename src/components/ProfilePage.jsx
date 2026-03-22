@@ -38,10 +38,21 @@ export default function ProfilePage({
 
   async function saveProfile() {
     setSaving(true)
-    await supabase.from('profiles').update({ name, contact, contact_type: contactType }).eq('id', currentUser.id)
-    onProfileUpdate?.({ name, contact, contact_type: contactType })
-    onToast('Profile updated')
-    setEditingProfile(false)
+    // upsert ensures the row exists even if insert failed during signup
+    const { error } = await supabase.from('profiles').upsert({
+      id: currentUser.id,
+      name,
+      contact,
+      contact_type: contactType,
+    }, { onConflict: 'id' })
+    if (error) {
+      console.error('Profile save error:', error.message)
+      onToast('Error saving profile — try again')
+    } else {
+      onProfileUpdate?.({ name, contact, contact_type: contactType })
+      onToast('Profile updated ✓')
+      setEditingProfile(false)
+    }
     setSaving(false)
   }
 
