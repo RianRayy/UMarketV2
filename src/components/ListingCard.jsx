@@ -1,5 +1,6 @@
 import { Heart } from 'lucide-react'
 import { getCardColor } from '../constants'
+import { timeAgo } from '../utils/time'
 
 const CONDITION_COLORS = {
   'Like New': '#16a34a',
@@ -102,6 +103,11 @@ export default function ListingCard({ listing, isFav, onFav, onClick, schoolColo
         {listing.location && (
           <p style={{ margin: 0, fontSize: 12, color: '#9ca3af' }}>{listing.location}</p>
         )}
+
+        {/* Time ago */}
+        <p style={{ margin: '4px 0 0', fontSize: 11, color: '#c4c8d0', fontWeight: 500 }}>
+          {timeAgo(listing.created_at)}
+        </p>
       </div>
     </div>
   )

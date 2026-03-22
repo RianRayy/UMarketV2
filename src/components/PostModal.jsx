@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react'
-import { X, Image } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { X, Image, MapPin, Search } from 'lucide-react'
 import Overlay from './Overlay'
 import { supabase } from '../supabase'
 import { CONDITIONS, CATEGORIES } from '../constants'
@@ -19,6 +19,11 @@ export default function PostModal({ onClose, onSuccess, currentUser, school, sch
   const [price, setPrice] = useState('')
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
+  const [coords, setCoords] = useState(null) // { lat, lng }
+  const [locationSuggestions, setLocationSuggestions] = useState([])
+  const [locationLoading, setLocationLoading] = useState(false)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [locationConfirmed, setLocationConfirmed] = useState(false)
   const [condition, setCondition] = useState('')
   const [category, setCategory] = useState('misc')
   const [beds, setBeds] = useState('')
@@ -32,16 +37,68 @@ export default function PostModal({ onClose, onSuccess, currentUser, school, sch
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const fileRef = useRef()
+  const locationRef = useRef()
+  const suggestionsRef = useRef()
 
   const isHousing = type === 'housing' || type === 'sublease'
   const isLooking = type === 'looking'
+
+  // Debounced Nominatim search
+  useEffect(() => {
+    if (locationConfirmed || !location || location.length < 3) {
+      setLocationSuggestions([])
+      setShowSuggestions(false)
+      return
+    }
+    const t = setTimeout(async () => {
+      setLocationLoading(true)
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=6&addressdetails=1`,
+          { headers: { 'Accept-Language': 'en' } }
+        )
+        const data = await res.json()
+        setLocationSuggestions(data)
+        setShowSuggestions(data.length > 0)
+      } catch {
+        setLocationSuggestions([])
+      }
+      setLocationLoading(false)
+    }, 450)
+    return () => clearTimeout(t)
+  }, [location, locationConfirmed])
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    function onMouseDown(e) {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target) && !locationRef.current?.contains(e.target)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', onMouseDown)
+    return () => document.removeEventListener('mousedown', onMouseDown)
+  }, [])
+
+  function pickLocation(suggestion) {
+    // Build a readable name: "City, State, Country" style
+    const a = suggestion.address || {}
+    const parts = [
+      a.city || a.town || a.village || a.county,
+      a.state,
+      a.country_code?.toUpperCase() === 'US' ? null : a.country,
+    ].filter(Boolean)
+    const label = parts.length > 0 ? parts.join(', ') : suggestion.display_name.split(',').slice(0, 2).join(',').trim()
+    setLocation(label)
+    setCoords({ lat: parseFloat(suggestion.lat), lng: parseFloat(suggestion.lon) })
+    setLocationConfirmed(true)
+    setShowSuggestions(false)
+  }
 
   async function handleImages(files) {
     const remaining = MAX_PHOTOS - images.length
     const selected = Array.from(files).slice(0, remaining)
     if (!selected.length) return
 
-    // Show local previews immediately
     const localPreviews = selected.map(f => URL.createObjectURL(f))
     setPreviews(prev => [...prev, ...localPreviews])
 
@@ -79,6 +136,8 @@ export default function PostModal({ onClose, onSuccess, currentUser, school, sch
 
     const listing = {
       title, description, location,
+      lat: coords?.lat || null,
+      lng: coords?.lng || null,
       seller_id: currentUser.id,
       school_id: school,
       is_housing: isHousing,
@@ -87,7 +146,7 @@ export default function PostModal({ onClose, onSuccess, currentUser, school, sch
       images,
       contact: contactData,
       contact_type: 'multi',
-      sold: false
+      sold: false,
     }
 
     if (!isLooking) listing.price = price ? parseInt(price) : 0
@@ -116,7 +175,7 @@ export default function PostModal({ onClose, onSuccess, currentUser, school, sch
                 padding: '10px 8px', borderRadius: 10, border: '1.5px solid',
                 borderColor: type === t.id ? (schoolColor || '#111') : '#e5e7eb',
                 background: type === t.id ? (schoolColor ? schoolColor + '12' : '#f3f4f6') : '#f9fafb',
-                cursor: 'pointer', textAlign: 'center'
+                cursor: 'pointer', textAlign: 'center',
               }}
             >
               <div style={{ fontSize: 20, marginBottom: 4 }}>{t.icon}</div>
@@ -149,47 +208,116 @@ export default function PostModal({ onClose, onSuccess, currentUser, school, sch
           </div>
         )}
 
-        <FInput label="Location" value={location} onChange={setLocation} placeholder="Salt Lake City, UT" />
+        {/* ── Location search ── */}
+        <div>
+          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+            Location <span style={{ color: '#9ca3af', fontWeight: 400 }}>(select from suggestions for map)</span>
+          </label>
+          <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative' }}>
+              <MapPin size={15} color="#9ca3af" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+              <input
+                ref={locationRef}
+                value={location}
+                onChange={e => { setLocation(e.target.value); setLocationConfirmed(false); setCoords(null) }}
+                onFocus={() => { if (locationSuggestions.length > 0) setShowSuggestions(true) }}
+                placeholder="Start typing a city or address..."
+                style={{
+                  width: '100%', padding: '10px 36px 10px 34px', borderRadius: 10,
+                  border: `1px solid ${locationConfirmed ? '#22c55e' : '#e5e7eb'}`,
+                  background: '#f9fafb', fontSize: 14, outline: 'none', color: '#111', boxSizing: 'border-box',
+                }}
+              />
+              {locationLoading && (
+                <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, border: '2px solid #e5e7eb', borderTopColor: schoolColor || '#111', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
+              )}
+              {locationConfirmed && (
+                <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#22c55e', fontSize: 12, fontWeight: 700 }}>✓</div>
+              )}
+            </div>
+
+            {/* Suggestions dropdown */}
+            {showSuggestions && locationSuggestions.length > 0 && (
+              <div
+                ref={suggestionsRef}
+                style={{
+                  position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 999,
+                  background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)', marginTop: 4, overflow: 'hidden',
+                }}
+              >
+                {locationSuggestions.map((s, i) => {
+                  const a = s.address || {}
+                  const city = a.city || a.town || a.village || a.county || ''
+                  const state = a.state || ''
+                  const country = a.country || ''
+                  const primary = city || s.display_name.split(',')[0]
+                  const secondary = [state, country].filter(Boolean).join(', ')
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onMouseDown={() => pickLocation(s)}
+                      style={{
+                        width: '100%', padding: '10px 14px', border: 'none', borderBottom: i < locationSuggestions.length - 1 ? '1px solid #f3f4f6' : 'none',
+                        background: 'transparent', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10,
+                        transition: 'background 0.1s',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = '#f9fafb'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <MapPin size={14} color="#9ca3af" style={{ flexShrink: 0 }} />
+                      <div>
+                        <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#111' }}>{primary}</p>
+                        {secondary && <p style={{ margin: 0, fontSize: 12, color: '#9ca3af' }}>{secondary}</p>}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+          {coords && (
+            <p style={{ margin: '5px 0 0', fontSize: 11, color: '#22c55e', fontWeight: 600 }}>
+              📍 Location confirmed — buyers will see an approximate map area
+            </p>
+          )}
+        </div>
+
         <FInput label="Description" value={description} onChange={setDescription} placeholder="Tell buyers more..." textarea />
 
-        {/* Contact — email + phone, one required */}
+        {/* Contact info */}
         <div>
           <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
             Contact Info <span style={{ color: '#9ca3af', fontWeight: 400 }}>(at least one required)</span>
           </label>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <input
-              type="email"
-              value={contactEmail}
-              onChange={e => setContactEmail(e.target.value)}
+              type="email" value={contactEmail} onChange={e => setContactEmail(e.target.value)}
               placeholder="Email address"
               style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #e5e7eb', background: '#f9fafb', fontSize: 14, color: '#111', outline: 'none', boxSizing: 'border-box' }}
             />
             <input
-              type="tel"
-              value={contactPhone}
-              onChange={e => setContactPhone(e.target.value)}
+              type="tel" value={contactPhone} onChange={e => setContactPhone(e.target.value)}
               placeholder="Phone number"
               style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #e5e7eb', background: '#f9fafb', fontSize: 14, color: '#111', outline: 'none', boxSizing: 'border-box' }}
             />
           </div>
         </div>
 
-        {/* Image upload — up to 6 */}
+        {/* Photo upload */}
         <div>
           <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
             Photos <span style={{ color: '#9ca3af', fontWeight: 400 }}>({images.length}/{MAX_PHOTOS})</span>
           </label>
 
-          {/* Previews grid */}
           {displayImages.length > 0 && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 10 }}>
               {displayImages.map((url, i) => (
                 <div key={i} style={{ position: 'relative', paddingTop: '75%', borderRadius: 10, overflow: 'hidden', background: '#f3f4f6' }}>
-                  <img src={url} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={url} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
                   <button
-                    type="button"
-                    onClick={() => removeImage(i)}
+                    type="button" onClick={() => removeImage(i)}
                     style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
                     <X size={13} color="#fff" />
@@ -199,15 +327,10 @@ export default function PostModal({ onClose, onSuccess, currentUser, school, sch
             </div>
           )}
 
-          {/* Upload button */}
           {images.length < MAX_PHOTOS && (
             <div
               onClick={() => fileRef.current?.click()}
-              style={{
-                border: '2px dashed #e5e7eb', borderRadius: 12, padding: '16px',
-                textAlign: 'center', cursor: 'pointer', background: '#f9fafb',
-                transition: 'border-color 0.15s'
-              }}
+              style={{ border: '2px dashed #e5e7eb', borderRadius: 12, padding: '16px', textAlign: 'center', cursor: 'pointer', background: '#f9fafb', transition: 'border-color 0.15s' }}
               onMouseEnter={e => e.currentTarget.style.borderColor = schoolColor || '#111'}
               onMouseLeave={e => e.currentTarget.style.borderColor = '#e5e7eb'}
             >

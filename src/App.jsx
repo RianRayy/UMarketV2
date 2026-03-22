@@ -17,6 +17,7 @@ import ContactModal from './components/ContactModal'
 import ReportModal from './components/ReportModal'
 import FilterModal from './components/FilterModal'
 import ProfilePage from './components/ProfilePage'
+import SellerPage from './components/SellerPage'
 
 function App() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
@@ -38,6 +39,9 @@ function App() {
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState({ sort: 'newest' })
   const [favs, setFavs] = useState(new Set())
+
+  // Seller page
+  const [sellerPage, setSellerPage] = useState(null) // userId or null
 
   // Modals
   const [showAuth, setShowAuth] = useState(false)
@@ -118,7 +122,7 @@ function App() {
   async function loadListings(currentSchool, currentCategory, currentSection, sortOrder) {
     setLoading(true)
     let query = supabase.from('listings')
-      .select('*')
+      .select('*, profiles(name, grade, verified, sold_count)')
       .eq('school_id', currentSchool)
 
     if (currentCategory !== 'all') {
@@ -198,6 +202,14 @@ function App() {
     if (!currentUser) { handleAuth('login'); return }
     setProfileTab(tab)
     setPage('profile')
+  }
+
+  function handleViewSeller(sellerId) {
+    // Don't navigate to own profile via seller page
+    if (sellerId === currentUser?.id) { handleProfile('listings'); return }
+    setDetail(null)
+    setSellerPage(sellerId)
+    setPage('seller')
   }
 
   // Category mobile strip
@@ -408,7 +420,7 @@ function App() {
               )}
             </div>
           </div>
-        ) : (
+        ) : page === 'profile' ? (
           <ProfilePage
             currentUser={currentUser}
             profile={profile}
@@ -425,6 +437,16 @@ function App() {
             onToast={setToast}
             onProfileUpdate={updates => setProfile(prev => ({ ...prev, ...updates }))}
             onHome={() => setPage('home')}
+          />
+        ) : (
+          <SellerPage
+            sellerId={sellerPage}
+            onBack={() => setPage('home')}
+            onDetail={setDetail}
+            onFav={toggleFav}
+            favs={favs}
+            schoolColor={schoolColor}
+            currentUser={currentUser}
           />
         )}
       </div>
@@ -482,6 +504,7 @@ function App() {
           onEdit={l => { setDetail(null); setShowEdit(l) }}
           onSold={markSold}
           schoolColor={schoolColor}
+          onViewSeller={handleViewSeller}
         />
       )}
       {showContact && (
