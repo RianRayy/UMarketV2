@@ -243,7 +243,7 @@ function App() {
                 const subleaseCount = listings.filter(l => l.category === 'sublease').length
                 const homesCount = listings.filter(l => l.category === 'housing').length
                 const stats = [
-                  { icon: '🔍', label: 'Looking for housing', count: lookingCount, cat: 'looking' },
+                  { icon: '🔍', label: 'Looking for roommates', count: lookingCount, cat: 'looking' },
                   { icon: '🔑', label: 'Subleases available', count: subleaseCount, cat: 'sublease' },
                   { icon: '🏡', label: 'Homes listed', count: homesCount, cat: 'housing' },
                 ]
