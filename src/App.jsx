@@ -388,7 +388,8 @@ function App() {
                 <div style={{ textAlign: 'center', padding: '60px 20px' }}>
                   <p style={{ fontSize: 48, marginBottom: 12 }}>🔍</p>
                   <p style={{ fontSize: 18, fontWeight: 700, color: '#374151', margin: '0 0 6px' }}>No listings found</p>
-                  <p style={{ fontSize: 14, color: '#9ca3af', margin: 0 }}>Try a different category or search term</p>
+                  <p style={{ fontSize: 14, color: '#9ca3af', margin: '0 0 12px' }}>Try a different category or search term</p>
+                  <p style={{ fontSize: 11, color: '#d1d5db', margin: 0 }}>school: {school} | cat: {category} | section: {activeSection ?? 'null'} | total: {listings.length}</p>
                 </div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 20 }} className="animate-fade-in">
