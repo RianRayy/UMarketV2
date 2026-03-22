@@ -34,6 +34,7 @@ function App() {
   const [listings, setListings] = useState([])
   const [loading, setLoading] = useState(true)
   const [category, setCategory] = useState('all')
+  const [activeSection, setActiveSection] = useState(null) // null | 'housing' | 'marketplace'
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState({ sort: 'newest' })
   const [favs, setFavs] = useState(new Set())
@@ -239,31 +240,20 @@ function App() {
       {/* Hero — full width, only on home */}
       {page === 'home' && school && (
         <div style={{ background: '#fdf8f6', borderBottom: '1px solid #e5e7eb', padding: isMobile ? '32px 16px 28px' : '48px 32px 36px' }}>
-          <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+          <div style={{ maxWidth: 860, margin: '0 auto', textAlign: 'center' }}>
+
             {/* Badge */}
             <div style={{ display: 'inline-flex', alignItems: 'center', padding: '6px 16px', borderRadius: 99, border: `1.5px solid ${schoolColor}`, marginBottom: 20 }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: schoolColor }}>Built for {schoolObj?.name || 'your campus'} students</span>
             </div>
 
             {/* Headline */}
-            <h1 style={{ fontSize: isMobile ? 30 : 52, fontWeight: 900, color: '#111', margin: '0 0 20px', letterSpacing: '-1.5px', lineHeight: 1.1, maxWidth: 720 }}>
+            <h1 style={{ fontSize: isMobile ? 28 : 52, fontWeight: 900, color: '#111', margin: '0 0 32px', letterSpacing: '-1.5px', lineHeight: 1.1 }}>
               Find housing, roommates, subleases, and student deals in one place.
             </h1>
 
-            {/* CTAs */}
-            <div style={{ display: 'flex', gap: 12, marginBottom: 36, flexWrap: 'wrap' }}>
-              <button
-                onClick={() => setCategory('housing')}
-                style={{ padding: '12px 26px', borderRadius: 99, border: 'none', background: schoolColor, color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
-              >Explore Housing</button>
-              <button
-                onClick={() => setCategory('textbooks')}
-                style={{ padding: '12px 26px', borderRadius: 99, border: '1.5px solid #111', background: 'transparent', color: '#111', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
-              >Browse Marketplace</button>
-            </div>
-
             {/* Stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(3, 180px)', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
               {[
                 { count: listings.filter(l => l.is_looking || l.category === 'looking').length, label: 'Looking for Roommates', cat: 'looking' },
                 { count: listings.filter(l => l.category === 'housing').length, label: 'Housing Listed', cat: 'housing' },
@@ -271,8 +261,8 @@ function App() {
               ].map(s => (
                 <button
                   key={s.cat}
-                  onClick={() => setCategory(s.cat)}
-                  style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: isMobile ? '12px 10px' : '18px 20px', textAlign: 'left', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', transition: 'box-shadow 0.15s' }}
+                  onClick={() => { setCategory(s.cat); setActiveSection('housing') }}
+                  style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: isMobile ? '12px 8px' : '20px 24px', textAlign: 'center', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', transition: 'box-shadow 0.15s' }}
                   onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)'}
                   onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'}
                 >
@@ -281,6 +271,39 @@ function App() {
                 </button>
               ))}
             </div>
+
+            {/* CTAs — below stats */}
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => { setCategory('all'); setActiveSection(null) }}
+                style={{
+                  padding: '12px 26px', borderRadius: 99, fontWeight: 700, fontSize: 15, cursor: 'pointer',
+                  border: `1.5px solid ${activeSection === null ? schoolColor : '#d1d5db'}`,
+                  background: activeSection === null ? schoolColor + '15' : 'transparent',
+                  color: activeSection === null ? schoolColor : '#374151',
+                  transition: 'all 0.15s'
+                }}
+              >All</button>
+              <button
+                onClick={() => { setCategory('all'); setActiveSection('housing') }}
+                style={{
+                  padding: '12px 26px', borderRadius: 99, fontWeight: 700, fontSize: 15, cursor: 'pointer', border: 'none',
+                  background: activeSection === 'housing' ? schoolColor : '#f3f4f6',
+                  color: activeSection === 'housing' ? '#fff' : '#374151',
+                  transition: 'all 0.15s'
+                }}
+              >Explore Housing</button>
+              <button
+                onClick={() => { setCategory('textbooks'); setActiveSection('marketplace') }}
+                style={{
+                  padding: '12px 26px', borderRadius: 99, fontWeight: 700, fontSize: 15, cursor: 'pointer', border: 'none',
+                  background: activeSection === 'marketplace' ? '#111' : '#f3f4f6',
+                  color: activeSection === 'marketplace' ? '#fff' : '#374151',
+                  transition: 'all 0.15s'
+                }}
+              >Browse Marketplace</button>
+            </div>
+
           </div>
         </div>
       )}
@@ -288,8 +311,11 @@ function App() {
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: isMobile ? '16px 16px 100px' : '32px 32px' }}>
         {page === 'home' ? (
           <div style={{ display: 'flex', gap: 40 }}>
-            {!isMobile && (
-              <Sidebar category={category} onCategory={setCategory} schoolColor={schoolColor} />
+            {!isMobile && activeSection === 'housing' && (
+              <Sidebar category={category} onCategory={setCategory} schoolColor={schoolColor} mode="housing" />
+            )}
+            {!isMobile && activeSection === 'marketplace' && (
+              <Sidebar category={category} onCategory={setCategory} schoolColor={schoolColor} mode="marketplace" />
             )}
 
             <div style={{ flex: 1, minWidth: 0 }}>
