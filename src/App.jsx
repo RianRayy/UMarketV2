@@ -238,7 +238,7 @@ function App() {
 
             <div style={{ flex: 1, minWidth: 0 }}>
               {/* Housing stats banner — only on All tab */}
-              {category === 'all' && !loading && listings.length > 0 && (() => {
+              {category === 'all' && !loading && (() => {
                 const lookingCount = listings.filter(l => l.category === 'looking' || l.is_looking).length
                 const subleaseCount = listings.filter(l => l.category === 'sublease').length
                 const homesCount = listings.filter(l => l.category === 'housing').length
