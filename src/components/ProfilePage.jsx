@@ -191,11 +191,23 @@ function ListingRow({ listing, onDetail, onEdit, onDelete, onSold, schoolColor }
         )}
       </div>
 
-      <div style={{ flex: 1, padding: '12px 14px', cursor: 'pointer' }} onClick={() => onDetail(listing)}>
+      <div style={{ flex: 1, padding: '12px 14px', cursor: 'pointer', minWidth: 0 }} onClick={() => onDetail(listing)}>
         <p style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 700, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{listing.title}</p>
-        <p style={{ margin: 0, fontSize: 13, color: schoolColor || '#374151', fontWeight: 600 }}>
-          {listing.price != null && !listing.is_looking ? (listing.price === 0 ? 'Free' : `$${listing.price}`) : listing.budget ? `Budget: $${listing.budget}` : ''}
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+          <p style={{ margin: 0, fontSize: 13, color: schoolColor || '#374151', fontWeight: 700 }}>
+            {listing.price != null && !listing.is_looking ? (listing.price === 0 ? 'Free' : `$${listing.price}`) : listing.budget ? `Budget: $${listing.budget}` : ''}
+          </p>
+          {listing.condition && (
+            <span style={{
+              fontSize: 11, fontWeight: 700, padding: '2px 7px', borderRadius: 99,
+              color: ({ 'Like New': '#16a34a', 'Good': '#2563eb', 'Fair': '#d97706', 'Parts Only': '#dc2626' }[listing.condition] || '#374151'),
+              background: ({ 'Like New': '#dcfce7', 'Good': '#dbeafe', 'Fair': '#fef3c7', 'Parts Only': '#fee2e2' }[listing.condition] || '#f3f4f6'),
+            }}>{listing.condition}</span>
+          )}
+        </div>
+        {listing.description && (
+          <p style={{ margin: 0, fontSize: 12, color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{listing.description}</p>
+        )}
       </div>
 
       {onEdit && (

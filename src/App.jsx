@@ -112,35 +112,32 @@ function App() {
   // Load listings
   useEffect(() => {
     if (!school) { setListings([]); setLoading(false); return }
-    loadListings()
+    loadListings(school, category, activeSection, filters.sort)
   }, [school, category, filters.sort, activeSection])
 
-  async function loadListings() {
+  async function loadListings(currentSchool, currentCategory, currentSection, sortOrder) {
     setLoading(true)
     let query = supabase.from('listings')
       .select('*, profiles(name, verified, grade, transactions, sold_count)')
-      .eq('school_id', school)
+      .eq('school_id', currentSchool)
 
-    if (category !== 'all') {
-      // Specific sub-category selected
-      if (category === 'housing') query = query.eq('is_housing', true).eq('category', 'housing')
-      else if (category === 'sublease') query = query.eq('is_housing', true).eq('category', 'sublease')
-      else if (category === 'looking') query = query.eq('is_looking', true)
-      else query = query.eq('category', category).eq('is_housing', false).eq('is_looking', false)
-    } else if (activeSection === 'housing') {
-      // All housing: housing listed + subleases + looking for roommates
+    if (currentCategory !== 'all') {
+      if (currentCategory === 'housing') query = query.eq('is_housing', true).eq('category', 'housing')
+      else if (currentCategory === 'sublease') query = query.eq('is_housing', true).eq('category', 'sublease')
+      else if (currentCategory === 'looking') query = query.eq('is_looking', true)
+      else query = query.eq('category', currentCategory).eq('is_housing', false).eq('is_looking', false)
+    } else if (currentSection === 'housing') {
       query = query.or('is_housing.eq.true,is_looking.eq.true')
-    } else if (activeSection === 'marketplace') {
-      // All marketplace: sell items only (no housing, no looking)
+    } else if (currentSection === 'marketplace') {
       query = query.eq('is_housing', false).eq('is_looking', false)
     }
-    // activeSection === null → show everything (All)
 
-    if (filters.sort === 'low') query = query.order('price', { ascending: true })
-    else if (filters.sort === 'high') query = query.order('price', { ascending: false })
+    if (sortOrder === 'low') query = query.order('price', { ascending: true })
+    else if (sortOrder === 'high') query = query.order('price', { ascending: false })
     else query = query.order('created_at', { ascending: false })
 
-    const { data } = await query
+    const { data, error } = await query
+    if (error) console.error('loadListings error:', error)
     setListings(data || [])
     setLoading(false)
   }
@@ -375,7 +372,7 @@ function App() {
 
               {/* Grid */}
               {loading ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 20 }}>
                   {Array(6).fill(0).map((_, i) => (
                     <div key={i} style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid #e5e7eb', background: '#fff' }}>
                       <div className="skeleton" style={{ height: 200 }} />
@@ -394,7 +391,7 @@ function App() {
                   <p style={{ fontSize: 14, color: '#9ca3af', margin: 0 }}>Try a different category or search term</p>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }} className="animate-fade-in">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 20 }} className="animate-fade-in">
                   {filtered.map(listing => (
                     <ListingCard
                       key={listing.id}
