@@ -53,7 +53,7 @@ export default function ListingCard({ listing, isFav, onFav, onClick, schoolColo
       }}
     >
       {/* Image */}
-      <div style={{ position: 'relative', height: 200, background: color.bg, overflow: 'hidden', flexShrink: 0 }}>
+      <div style={{ position: 'relative', height: 240, background: color.bg, overflow: 'hidden', flexShrink: 0 }}>
         {listing.images && listing.images.length > 0 ? (
           <img
             src={listing.images[0]}
