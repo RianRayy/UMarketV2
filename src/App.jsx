@@ -94,7 +94,7 @@ function App() {
   useEffect(() => {
     if (!school) { setListings([]); setLoading(false); return }
     loadListings()
-  }, [school, category, filters.sort])
+  }, [school, category, filters.sort, activeSection])
 
   async function loadListings() {
     setLoading(true)
@@ -207,7 +207,6 @@ function App() {
         currentUser={currentUser} favCount={favs.size}
         onProfile={handleProfile} isMobile={isMobile}
         schoolColor={schoolColor}
-        onCategoryChange={cat => { setCategory(cat); setPage('home') }}
       />
 
       {/* Mobile tab strip */}
@@ -241,11 +240,6 @@ function App() {
       {page === 'home' && school && (
         <div style={{ background: '#fdf8f6', borderBottom: '1px solid #e5e7eb', padding: isMobile ? '32px 16px 28px' : '48px 32px 36px' }}>
           <div style={{ maxWidth: 860, margin: '0 auto', textAlign: 'center' }}>
-
-            {/* Badge */}
-            <div style={{ display: 'inline-flex', alignItems: 'center', padding: '6px 16px', borderRadius: 99, border: `1.5px solid ${schoolColor}`, marginBottom: 20 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: schoolColor }}>Built for {schoolObj?.name || 'your campus'} students</span>
-            </div>
 
             {/* Headline */}
             <h1 style={{ fontSize: isMobile ? 28 : 52, fontWeight: 900, color: '#111', margin: '0 0 32px', letterSpacing: '-1.5px', lineHeight: 1.1 }}>
@@ -319,41 +313,6 @@ function App() {
             )}
 
             <div style={{ flex: 1, minWidth: 0 }}>
-
-              {/* Section header + tabs */}
-              <div style={{ marginBottom: 24 }}>
-                <p style={{ fontSize: 11, fontWeight: 800, color: schoolColor, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 6px' }}>Housing Marketplace</p>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16 }}>
-                  <h2 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, color: '#111', margin: 0, letterSpacing: '-0.5px' }}>
-                    Find student housing at {schoolObj?.name || 'your campus'}
-                  </h2>
-                  {!currentUser && (
-                    <span style={{ fontSize: 13, color: '#9ca3af', display: isMobile ? 'none' : 'block' }}>Must be signed in to post or contact sellers</span>
-                  )}
-                </div>
-
-                {/* Tabs */}
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {[
-                    { id: 'all', label: 'All' },
-                    { id: 'looking', label: 'Looking for Roommates' },
-                    { id: 'housing', label: 'Housing Listed' },
-                    { id: 'sublease', label: 'Subleases' },
-                  ].map(tab => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setCategory(tab.id)}
-                      style={{
-                        padding: '8px 18px', borderRadius: 99, fontSize: 14, fontWeight: 600, cursor: 'pointer', border: 'none',
-                        background: category === tab.id ? schoolColor : '#fff',
-                        color: category === tab.id ? '#fff' : '#374151',
-                        boxShadow: category === tab.id ? 'none' : '0 1px 3px rgba(0,0,0,0.08)',
-                        transition: 'all 0.15s'
-                      }}
-                    >{tab.label}</button>
-                  ))}
-                </div>
-              </div>
 
               {/* Search + filter bar */}
               {!isMobile && (
