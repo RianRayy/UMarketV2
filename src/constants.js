@@ -40,7 +40,7 @@ export const REPORT_REASONS = [
   'Other',
 ]
 
-export const GRADES = ['Freshman', 'Sophomore', 'Junior', 'Senior', 'Grad Student', 'Alumni']
+export const GRADES = ['2025', '2026', '2027', '2028', '2029', '2030', '2031', '2032', 'Grad Student']
 
 export const CARD_COLORS = [
   { bg: '#EEF2FF', accent: '#6366F1' },

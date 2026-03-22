@@ -24,13 +24,17 @@ export default function AuthModal({ mode: initMode, onClose, onSuccess, schoolCo
       if (error) setError(error.message)
       else onSuccess()
     } else {
+      if (!email.endsWith('.edu')) { setError('You must use a .edu email address to sign up.'); setLoading(false); return }
       if (!name || !school || !grade) { setError('Please fill all fields'); setLoading(false); return }
-      const { data, error } = await supabase.auth.signUp({ email, password })
+      const { data, error } = await supabase.auth.signUp({
+        email, password,
+        options: { emailRedirectTo: 'https://u-market-v2-git-main-rian-rayners-projects.vercel.app' }
+      })
       if (error) { setError(error.message); setLoading(false); return }
       if (data.user) {
         await supabase.from('profiles').insert({
           id: data.user.id, name, school, grade,
-          verified: email.endsWith('.edu'),
+          verified: true,
           transactions: 0, sold_count: 0
         })
       }
@@ -52,6 +56,9 @@ export default function AuthModal({ mode: initMode, onClose, onSuccess, schoolCo
         <Field icon={<Mail size={16} color="#9ca3af" />} label="Email">
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@school.edu" required />
         </Field>
+        {mode === 'signup' && email.length > 0 && !email.endsWith('.edu') && (
+          <p style={{ margin: '-8px 0 0', fontSize: 12, color: '#dc2626' }}>⚠ Must be a .edu email address</p>
+        )}
 
         <Field icon={<Lock size={16} color="#9ca3af" />} label="Password">
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
@@ -68,9 +75,9 @@ export default function AuthModal({ mode: initMode, onClose, onSuccess, schoolCo
               </select>
             </Field>
 
-            <Field icon={<ChevronDown size={16} color="#9ca3af" />} label="Year">
+            <Field icon={<ChevronDown size={16} color="#9ca3af" />} label="Graduating Year">
               <select value={grade} onChange={e => setGrade(e.target.value)} required>
-                <option value="">Select your year</option>
+                <option value="">Select graduating year</option>
                 {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
               </select>
             </Field>
