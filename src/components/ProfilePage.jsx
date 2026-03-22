@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import React from 'react'
-import { CheckCircle, Award, LogOut, Package, Heart, Settings, Edit2, Trash2, ChevronRight, School } from 'lucide-react'
+import { CheckCircle, Award, LogOut, Package, Heart, Settings, Edit2, Trash2, ChevronRight, School, ArrowLeft } from 'lucide-react'
 import { supabase } from '../supabase'
 import { getCardColor } from '../constants'
 
@@ -8,13 +8,26 @@ export default function ProfilePage({
   currentUser, profile, listings, favListings,
   onEdit, onDelete, onSold, onDetail,
   onSchoolSwitch, onLogout, schoolColor,
-  initTab, onToast, onProfileUpdate
+  initTab, onToast, onProfileUpdate, onHome
 }) {
   const [tab, setTab] = useState(initTab || 'listings')
   const [editingProfile, setEditingProfile] = useState(false)
   const [name, setName] = useState(profile?.name || '')
   const [contactType, setContactType] = useState(profile?.contact_type || 'instagram')
   const [contact, setContact] = useState(profile?.contact || '')
+  const [saving, setSaving] = useState(false)
+  const [myListings, setMyListings] = useState([])
+
+  // Load user's own listings directly from Supabase
+  useEffect(() => {
+    if (!currentUser) return
+    supabase
+      .from('listings')
+      .select('*')
+      .eq('seller_id', currentUser.id)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => { if (data) setMyListings(data) })
+  }, [currentUser])
 
   // Sync local state when profile prop updates
   useEffect(() => {
@@ -22,7 +35,6 @@ export default function ProfilePage({
     if (profile?.contact_type) setContactType(profile.contact_type)
     if (profile?.contact) setContact(profile.contact)
   }, [profile])
-  const [saving, setSaving] = useState(false)
 
   async function saveProfile() {
     setSaving(true)
@@ -33,10 +45,25 @@ export default function ProfilePage({
     setSaving(false)
   }
 
-  const myListings = listings.filter(l => l.seller_id === currentUser?.id)
-
   return (
     <div style={{ maxWidth: 640, margin: '0 auto', padding: '24px 16px 100px' }}>
+
+      {/* Back to home */}
+      <button
+        onClick={onHome}
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          marginBottom: 20, padding: '8px 16px', borderRadius: 99,
+          border: `1.5px solid ${schoolColor || '#CC0000'}`,
+          background: 'transparent', color: schoolColor || '#CC0000',
+          fontWeight: 600, fontSize: 14, cursor: 'pointer',
+          transition: 'all 0.15s'
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = schoolColor || '#CC0000'; e.currentTarget.style.color = '#fff' }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = schoolColor || '#CC0000' }}
+      >
+        <ArrowLeft size={15} /> Back to Home
+      </button>
 
       {/* Profile header */}
       <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16, padding: 20, marginBottom: 20 }}>

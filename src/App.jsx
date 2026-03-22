@@ -426,6 +426,7 @@ function App() {
             initTab={profileTab}
             onToast={setToast}
             onProfileUpdate={updates => setProfile(prev => ({ ...prev, ...updates }))}
+            onHome={() => setPage('home')}
           />
         )}
       </div>
