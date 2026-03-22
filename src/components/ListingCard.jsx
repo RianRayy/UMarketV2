@@ -1,30 +1,59 @@
-import { Heart, MapPin, CheckCircle } from 'lucide-react'
+import { Heart, MapPin } from 'lucide-react'
 import { getCardColor } from '../constants'
 
-export default function ListingCard({ listing, isFav, onFav, onClick, schoolColor }) {
+const CATEGORY_LABELS = {
+  looking: 'Looking for Roommates',
+  housing: 'Housing Listed',
+  sublease: 'Subleases',
+  textbooks: 'Textbooks',
+  furniture: 'Furniture',
+  electronics: 'Electronics',
+  clothing: 'Clothing',
+  appliances: 'Appliances',
+  sports: 'Sports',
+  misc: 'Misc',
+}
+
+export default function ListingCard({ listing, isFav, onFav, onClick, schoolColor, currentUser }) {
   const color = getCardColor(listing.id)
   const isHousing = listing.is_housing
   const isLooking = listing.is_looking
+  const red = schoolColor || '#CC0000'
+
+  const catLabel = listing.is_looking
+    ? 'Looking for Roommates'
+    : CATEGORY_LABELS[listing.category] || (listing.category ? listing.category.charAt(0).toUpperCase() + listing.category.slice(1) : 'Listing')
+
+  const price = listing.price != null
+    ? (listing.price === 0 ? 'Free' : `$${listing.price.toLocaleString()}${isHousing ? '/mo' : ''}`)
+    : null
+
+  const tags = []
+  if (listing.profiles?.verified) tags.push('Verified listing')
+  if (listing.condition) tags.push(listing.condition)
+  if (listing.is_looking) tags.push('Students only')
 
   return (
     <div
       onClick={() => onClick(listing)}
       style={{
-        background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb',
+        background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb',
         overflow: 'hidden', cursor: 'pointer',
         transition: 'transform 0.15s, box-shadow 0.15s',
+        display: 'flex', flexDirection: 'column',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.transform = 'translateY(-2px)'
-        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)'
+        e.currentTarget.style.transform = 'translateY(-3px)'
+        e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.1)'
       }}
       onMouseLeave={e => {
         e.currentTarget.style.transform = 'translateY(0)'
-        e.currentTarget.style.boxShadow = 'none'
+        e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'
       }}
     >
-      {/* Image / Color block */}
-      <div style={{ position: 'relative', height: 160, background: color.bg, overflow: 'hidden' }}>
+      {/* Image */}
+      <div style={{ position: 'relative', height: 200, background: color.bg, overflow: 'hidden', flexShrink: 0 }}>
         {listing.images && listing.images.length > 0 ? (
           <img
             src={listing.images[0]}
@@ -33,8 +62,26 @@ export default function ListingCard({ listing, isFav, onFav, onClick, schoolColo
           />
         ) : (
           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: 48 }}>{listing.emoji || (isHousing ? '🏠' : isLooking ? '🔍' : '📦')}</span>
+            <span style={{ fontSize: 56 }}>{listing.emoji || (isHousing ? '🏠' : isLooking ? '🔍' : '📦')}</span>
           </div>
+        )}
+
+        {/* Category badge */}
+        <span style={{
+          position: 'absolute', top: 12, left: 12,
+          background: red, color: '#fff',
+          fontSize: 10, fontWeight: 700, padding: '4px 10px',
+          borderRadius: 6, textTransform: 'uppercase', letterSpacing: '0.06em'
+        }}>{catLabel}</span>
+
+        {/* Price badge */}
+        {price && (
+          <span style={{
+            position: 'absolute', top: 12, right: 44,
+            background: '#fff', color: '#111',
+            fontSize: 13, fontWeight: 700, padding: '4px 10px',
+            borderRadius: 8, boxShadow: '0 1px 4px rgba(0,0,0,0.1)'
+          }}>{price}</span>
         )}
 
         {/* Fav button */}
@@ -51,62 +98,62 @@ export default function ListingCard({ listing, isFav, onFav, onClick, schoolColo
           <Heart size={15} color={isFav ? '#ef4444' : '#9ca3af'} fill={isFav ? '#ef4444' : 'none'} />
         </button>
 
-        {/* Condition badge */}
-        {listing.condition && !isHousing && (
-          <span style={{
-            position: 'absolute', bottom: 10, left: 10,
-            background: 'rgba(0,0,0,0.65)', color: '#fff',
-            fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6
-          }}>
-            {listing.condition}
-          </span>
-        )}
-
+        {/* Sold overlay */}
         {listing.sold && (
-          <div style={{
-            position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center'
-          }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ background: '#fff', color: '#111', fontWeight: 700, fontSize: 13, padding: '6px 14px', borderRadius: 8 }}>SOLD</span>
           </div>
         )}
       </div>
 
       {/* Content */}
-      <div style={{ padding: '12px 14px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
-          <p style={{ fontSize: 14, fontWeight: 600, color: '#111', margin: 0, lineHeight: 1.3, flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-            {listing.title}
-          </p>
-          {listing.price != null && !isLooking && (
-            <p style={{ fontSize: 15, fontWeight: 700, color: schoolColor || '#111', margin: 0, flexShrink: 0 }}>
-              {listing.price === 0 ? 'Free' : `$${listing.price}${isHousing ? '/mo' : ''}`}
-            </p>
-          )}
-          {isLooking && listing.budget && (
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#6b7280', margin: 0, flexShrink: 0 }}>
-              Budget: ${listing.budget}
-            </p>
-          )}
-        </div>
+      <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+        {/* Title */}
+        <p style={{ fontSize: 16, fontWeight: 700, color: '#111', margin: '0 0 6px', lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+          {listing.title}
+        </p>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          {listing.location && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              <MapPin size={11} color="#9ca3af" />
-              <span style={{ fontSize: 12, color: '#9ca3af' }}>{listing.location}</span>
-            </div>
-          )}
-          {listing.profiles?.verified && (
-            <CheckCircle size={11} color="#22c55e" style={{ marginLeft: 'auto' }} />
-          )}
-        </div>
+        {/* Location */}
+        {listing.location && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 8 }}>
+            <MapPin size={12} color="#9ca3af" />
+            <span style={{ fontSize: 13, color: '#9ca3af' }}>{listing.location}</span>
+          </div>
+        )}
 
-        {listing.profiles?.name && (
-          <p style={{ fontSize: 12, color: '#6b7280', margin: '4px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {listing.profiles.name}
+        {/* Description */}
+        {listing.description && (
+          <p style={{ fontSize: 13, color: '#6b7280', margin: '0 0 12px', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+            {listing.description}
           </p>
         )}
+
+        {/* Tags */}
+        {tags.length > 0 && (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+            {tags.map(tag => (
+              <span key={tag} style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6, background: '#f3f4f6', color: '#374151' }}>{tag}</span>
+            ))}
+          </div>
+        )}
+
+        {/* CTA button */}
+        <div style={{ marginTop: 'auto' }}>
+          <button
+            onClick={e => { e.stopPropagation(); onClick(listing) }}
+            style={{
+              width: '100%', padding: '10px 0',
+              borderRadius: 10, border: `1.5px solid ${red}`,
+              background: 'transparent', color: red,
+              fontWeight: 700, fontSize: 13, cursor: 'pointer',
+              transition: 'all 0.15s'
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = red; e.currentTarget.style.color = '#fff' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = red }}
+          >
+            {currentUser ? 'Message seller' : 'Sign in to message'}
+          </button>
+        </div>
       </div>
     </div>
   )

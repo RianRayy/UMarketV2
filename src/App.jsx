@@ -198,7 +198,7 @@ function App() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+    <div style={{ minHeight: '100vh', background: '#fdf8f6' }}>
       <Header
         school={school} onSchoolClick={() => setShowSchool(true)}
         search={search} onSearch={setSearch}
@@ -206,98 +206,167 @@ function App() {
         currentUser={currentUser} favCount={favs.size}
         onProfile={handleProfile} isMobile={isMobile}
         schoolColor={schoolColor}
+        onCategoryChange={cat => { setCategory(cat); setPage('home') }}
       />
 
-      {/* Mobile category strip */}
+      {/* Mobile tab strip */}
       {isMobile && page === 'home' && (
-        <div style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '8px 16px', overflowX: 'auto', display: 'flex', gap: 8 }} className="no-scrollbar">
-          {CATEGORIES.map(cat => (
+        <div style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '10px 16px', overflowX: 'auto', display: 'flex', gap: 8 }} className="no-scrollbar">
+          {[
+            { id: 'all', label: 'All' },
+            { id: 'looking', label: 'Roommates' },
+            { id: 'housing', label: 'Housing' },
+            { id: 'sublease', label: 'Subleases' },
+            { id: 'textbooks', label: 'Textbooks' },
+            { id: 'electronics', label: 'Electronics' },
+            { id: 'furniture', label: 'Furniture' },
+          ].map(tab => (
             <button
-              key={cat.id}
-              onClick={() => setCategory(cat.id)}
+              key={tab.id}
+              onClick={() => setCategory(tab.id)}
               style={{
-                flexShrink: 0, padding: '6px 14px', borderRadius: 99, fontSize: 13, fontWeight: 600,
-                border: '1.5px solid ' + (category === cat.id ? schoolColor : '#e5e7eb'),
-                background: category === cat.id ? schoolColor + '15' : '#f9fafb',
-                color: category === cat.id ? schoolColor : '#374151', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: 5
+                flexShrink: 0, padding: '7px 16px', borderRadius: 99, fontSize: 13, fontWeight: 600,
+                border: 'none', cursor: 'pointer',
+                background: category === tab.id ? schoolColor : '#f3f4f6',
+                color: category === tab.id ? '#fff' : '#374151',
+                transition: 'all 0.15s'
               }}
-            >
-              <span>{cat.icon}</span>{cat.label}
-            </button>
+            >{tab.label}</button>
           ))}
         </div>
       )}
 
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: isMobile ? '16px 16px 100px' : '24px 24px' }}>
+      {/* Hero — full width, only on home */}
+      {page === 'home' && school && (
+        <div style={{ background: '#fdf8f6', borderBottom: '1px solid #e5e7eb', padding: isMobile ? '32px 16px 28px' : '48px 32px 36px' }}>
+          <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+            {/* Badge */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', padding: '6px 16px', borderRadius: 99, border: `1.5px solid ${schoolColor}`, marginBottom: 20 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: schoolColor }}>Built for {schoolObj?.name || 'your campus'} students</span>
+            </div>
+
+            {/* Headline */}
+            <h1 style={{ fontSize: isMobile ? 30 : 52, fontWeight: 900, color: '#111', margin: '0 0 20px', letterSpacing: '-1.5px', lineHeight: 1.1, maxWidth: 720 }}>
+              Find housing, roommates, subleases, and student deals in one place.
+            </h1>
+
+            {/* CTAs */}
+            <div style={{ display: 'flex', gap: 12, marginBottom: 36, flexWrap: 'wrap' }}>
+              <button
+                onClick={() => setCategory('housing')}
+                style={{ padding: '12px 26px', borderRadius: 99, border: 'none', background: schoolColor, color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
+              >Explore Housing</button>
+              <button
+                onClick={() => setCategory('textbooks')}
+                style={{ padding: '12px 26px', borderRadius: 99, border: '1.5px solid #111', background: 'transparent', color: '#111', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
+              >Browse Marketplace</button>
+            </div>
+
+            {/* Stats */}
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(3, 180px)', gap: 12 }}>
+              {[
+                { count: listings.filter(l => l.is_looking || l.category === 'looking').length, label: 'Looking for Roommates', cat: 'looking' },
+                { count: listings.filter(l => l.category === 'housing').length, label: 'Housing Listed', cat: 'housing' },
+                { count: listings.filter(l => l.category === 'sublease').length, label: 'Subleases', cat: 'sublease' },
+              ].map(s => (
+                <button
+                  key={s.cat}
+                  onClick={() => setCategory(s.cat)}
+                  style={{ background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb', padding: isMobile ? '12px 10px' : '18px 20px', textAlign: 'left', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', transition: 'box-shadow 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)'}
+                  onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'}
+                >
+                  <div style={{ fontSize: isMobile ? 24 : 36, fontWeight: 900, color: schoolColor, lineHeight: 1, marginBottom: 4 }}>{s.count}</div>
+                  <div style={{ fontSize: isMobile ? 11 : 13, color: '#374151', fontWeight: 500 }}>{s.label}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: isMobile ? '16px 16px 100px' : '32px 32px' }}>
         {page === 'home' ? (
-          <div style={{ display: 'flex', gap: 32 }}>
+          <div style={{ display: 'flex', gap: 40 }}>
             {!isMobile && (
               <Sidebar category={category} onCategory={setCategory} schoolColor={schoolColor} />
             )}
 
             <div style={{ flex: 1, minWidth: 0 }}>
-              {/* Housing stats banner — only on All tab */}
-              {category === 'all' && (() => {
-                const lookingCount = listings.filter(l => l.category === 'looking' || l.is_looking).length
-                const subleaseCount = listings.filter(l => l.category === 'sublease').length
-                const homesCount = listings.filter(l => l.category === 'housing').length
-                const stats = [
-                  { icon: '🔍', label: 'Looking for roommates', count: lookingCount, cat: 'looking' },
-                  { icon: '🔑', label: 'Subleases available', count: subleaseCount, cat: 'sublease' },
-                  { icon: '🏡', label: 'Homes listed', count: homesCount, cat: 'housing' },
-                ]
-                return (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
-                    {stats.map(s => (
-                      <button
-                        key={s.cat}
-                        onClick={() => setCategory(s.cat)}
-                        style={{
-                          background: '#fff', border: '1.5px solid #e5e7eb', borderRadius: 14,
-                          padding: '14px 12px', cursor: 'pointer', textAlign: 'left',
-                          transition: 'border-color 0.15s, box-shadow 0.15s',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.borderColor = schoolColor; e.currentTarget.style.boxShadow = `0 0 0 3px ${schoolColor}15` }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor = '#e5e7eb'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)' }}
-                      >
-                        <div style={{ fontSize: 22, marginBottom: 6 }}>{s.icon}</div>
-                        <div style={{ fontSize: 26, fontWeight: 800, color: '#111', lineHeight: 1 }}>{s.count}</div>
-                        <div style={{ fontSize: 12, color: '#6b7280', fontWeight: 500, marginTop: 4 }}>{s.label}</div>
-                      </button>
-                    ))}
-                  </div>
-                )
-              })()}
 
-              {/* Filter bar */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
-                <button
-                  onClick={() => setShowFilters(true)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#374151' }}
-                >
-                  ⚙️ Filters
-                  {Object.keys(filters).filter(k => k !== 'sort' && filters[k]).length > 0 && (
-                    <span style={{ background: schoolColor, color: '#fff', borderRadius: '99px', fontSize: 11, fontWeight: 700, padding: '1px 6px', marginLeft: 2 }}>
-                      {Object.keys(filters).filter(k => k !== 'sort' && filters[k]).length}
-                    </span>
+              {/* Section header + tabs */}
+              <div style={{ marginBottom: 24 }}>
+                <p style={{ fontSize: 11, fontWeight: 800, color: schoolColor, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 6px' }}>Housing Marketplace</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16 }}>
+                  <h2 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, color: '#111', margin: 0, letterSpacing: '-0.5px' }}>
+                    Find student housing at {schoolObj?.name || 'your campus'}
+                  </h2>
+                  {!currentUser && (
+                    <span style={{ fontSize: 13, color: '#9ca3af', display: isMobile ? 'none' : 'block' }}>Must be signed in to post or contact sellers</span>
                   )}
-                </button>
-                <p style={{ margin: 0, fontSize: 13, color: '#9ca3af' }}>
-                  {loading ? 'Loading...' : `${filtered.length} listing${filtered.length !== 1 ? 's' : ''}`}
-                </p>
+                </div>
+
+                {/* Tabs */}
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {[
+                    { id: 'all', label: 'All' },
+                    { id: 'looking', label: 'Looking for Roommates' },
+                    { id: 'housing', label: 'Housing Listed' },
+                    { id: 'sublease', label: 'Subleases' },
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setCategory(tab.id)}
+                      style={{
+                        padding: '8px 18px', borderRadius: 99, fontSize: 14, fontWeight: 600, cursor: 'pointer', border: 'none',
+                        background: category === tab.id ? schoolColor : '#fff',
+                        color: category === tab.id ? '#fff' : '#374151',
+                        boxShadow: category === tab.id ? 'none' : '0 1px 3px rgba(0,0,0,0.08)',
+                        transition: 'all 0.15s'
+                      }}
+                    >{tab.label}</button>
+                  ))}
+                </div>
               </div>
+
+              {/* Search + filter bar */}
+              {!isMobile && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+                  <div style={{ position: 'relative', flex: 1 }}>
+                    <input
+                      value={search}
+                      onChange={e => setSearch(e.target.value)}
+                      placeholder="Search listings..."
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', background: '#fff', fontSize: 14, outline: 'none', color: '#111' }}
+                    />
+                  </div>
+                  <button
+                    onClick={() => setShowFilters(true)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', borderRadius: 10, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#374151', flexShrink: 0 }}
+                  >
+                    ⚙️ Filters
+                    {Object.keys(filters).filter(k => k !== 'sort' && filters[k]).length > 0 && (
+                      <span style={{ background: schoolColor, color: '#fff', borderRadius: '99px', fontSize: 11, fontWeight: 700, padding: '1px 6px', marginLeft: 2 }}>
+                        {Object.keys(filters).filter(k => k !== 'sort' && filters[k]).length}
+                      </span>
+                    )}
+                  </button>
+                  <p style={{ margin: 0, fontSize: 13, color: '#9ca3af', flexShrink: 0 }}>
+                    {loading ? 'Loading...' : `${filtered.length} listing${filtered.length !== 1 ? 's' : ''}`}
+                  </p>
+                </div>
+              )}
 
               {/* Grid */}
               {loading ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
-                  {Array(8).fill(0).map((_, i) => (
-                    <div key={i} style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
-                      <div className="skeleton" style={{ height: 160 }} />
-                      <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        <div className="skeleton" style={{ height: 14, borderRadius: 6, width: '80%' }} />
-                        <div className="skeleton" style={{ height: 14, borderRadius: 6, width: '50%' }} />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>
+                  {Array(6).fill(0).map((_, i) => (
+                    <div key={i} style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid #e5e7eb', background: '#fff' }}>
+                      <div className="skeleton" style={{ height: 200 }} />
+                      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <div className="skeleton" style={{ height: 16, borderRadius: 6, width: '80%' }} />
+                        <div className="skeleton" style={{ height: 13, borderRadius: 6, width: '50%' }} />
+                        <div className="skeleton" style={{ height: 13, borderRadius: 6, width: '90%' }} />
                       </div>
                     </div>
                   ))}
@@ -309,7 +378,7 @@ function App() {
                   <p style={{ fontSize: 14, color: '#9ca3af', margin: 0 }}>Try a different category or search term</p>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }} className="animate-fade-in">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }} className="animate-fade-in">
                   {filtered.map(listing => (
                     <ListingCard
                       key={listing.id}
@@ -318,6 +387,7 @@ function App() {
                       onFav={toggleFav}
                       onClick={setDetail}
                       schoolColor={schoolColor}
+                      currentUser={currentUser}
                     />
                   ))}
                 </div>
