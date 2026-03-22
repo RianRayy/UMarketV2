@@ -118,7 +118,7 @@ function App() {
   async function loadListings(currentSchool, currentCategory, currentSection, sortOrder) {
     setLoading(true)
     let query = supabase.from('listings')
-      .select('*, profiles(name, verified, grade, transactions, sold_count)')
+      .select('*')
       .eq('school_id', currentSchool)
 
     if (currentCategory !== 'all') {
