@@ -111,17 +111,31 @@ export default function PostModal({ onClose, onSuccess, currentUser, school, sch
     setPreviews(prev => [...prev, ...localPreviews])
 
     setUploading(true)
+    setError('')
     const urls = []
+    let failed = 0
     for (const file of selected) {
-      const ext = file.name.split('.').pop()
-      const path = `${currentUser.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-      const { error } = await supabase.storage.from('listing-images').upload(path, file)
-      if (!error) {
+      // Sanitize filename and ensure valid extension
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+      const safeName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const path = `${currentUser.id}/${safeName}`
+      const { error: uploadError } = await supabase.storage
+        .from('listing-images')
+        .upload(path, file, { cacheControl: '3600', upsert: false })
+      if (uploadError) {
+        console.error('Upload error:', uploadError.message)
+        failed++
+      } else {
         const { data } = supabase.storage.from('listing-images').getPublicUrl(path)
         urls.push(data.publicUrl)
       }
     }
+    if (failed > 0) setError(`${failed} photo(s) failed to upload. Try again or use a smaller file.`)
     setImages(prev => [...prev, ...urls])
+    // Remove previews for failed uploads (keep only ones that succeeded)
+    if (failed > 0) {
+      setPreviews(prev => prev.slice(0, prev.length - failed))
+    }
     setUploading(false)
   }
 
@@ -132,6 +146,7 @@ export default function PostModal({ onClose, onSuccess, currentUser, school, sch
 
   async function handleSubmit(e) {
     e.preventDefault()
+    if (uploading) { setError('Please wait — photos are still uploading'); return }
     if (!title) { setError('Title is required'); return }
     if (!contactEmail && !contactPhone) { setError('Please provide at least an email or phone number'); return }
     setLoading(true)
@@ -357,10 +372,10 @@ export default function PostModal({ onClose, onSuccess, currentUser, school, sch
         {error && <p style={{ color: '#dc2626', fontSize: 13, background: '#fee2e2', padding: '10px 12px', borderRadius: 8, margin: 0 }}>{error}</p>}
 
         <button
-          type="submit" disabled={loading}
-          style={{ padding: '13px', borderRadius: 12, border: 'none', background: loading ? '#d1d5db' : (schoolColor || '#111'), color: '#fff', fontWeight: 700, fontSize: 15, cursor: loading ? 'not-allowed' : 'pointer' }}
+          type="submit" disabled={loading || uploading}
+          style={{ padding: '13px', borderRadius: 12, border: 'none', background: (loading || uploading) ? '#d1d5db' : (schoolColor || '#111'), color: '#fff', fontWeight: 700, fontSize: 15, cursor: (loading || uploading) ? 'not-allowed' : 'pointer' }}
         >
-          {loading ? 'Posting...' : 'Post listing'}
+          {uploading ? '⏳ Uploading photos...' : loading ? 'Posting...' : 'Post listing'}
         </button>
       </form>
     </Overlay>
