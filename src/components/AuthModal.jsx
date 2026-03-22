@@ -21,9 +21,15 @@ export default function AuthModal({ mode: initMode, onClose, onSuccess, schoolCo
     setError('')
 
     if (mode === 'login') {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) setError(error.message)
-      else onSuccess()
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) { setError(error.message); setLoading(false); return }
+      if (!data.user.email_confirmed_at) {
+        await supabase.auth.signOut()
+        setError('Please verify your email before signing in. Check your inbox (and spam folder).')
+        setLoading(false)
+        return
+      }
+      onSuccess()
     } else {
       if (!email.endsWith('.edu')) { setError('You must use a .edu email address to sign up.'); setLoading(false); return }
       if (!name || !school || !grade) { setError('Please fill all fields'); setLoading(false); return }
